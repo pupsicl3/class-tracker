@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F3EE">
+<title>Class Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Classes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EE; --card:#FFFFFF; --ink:#1E1F22; --muted:#6E6E73; --line:#E6E2D8;
+  --acc:#2E6B52; --acc-soft:#E2EFE8; --acc-ink:#FFFFFF;
+  --green:#257049; --green-bg:#E2F1E8;
+  --amber:#9A6200; --amber-bg:#FAEFD6;
+  --red:#B3372B; --red-bg:#FBE4E0;
+  --gray:#6E6E73; --gray-bg:#ECEAE5;
+  --r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.4}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+#app{max-width:560px;margin:0 auto;min-height:100vh;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+
+/* Header */
+header.top{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(16px + env(safe-area-inset-top)) 20px 10px}
+.titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+h1{font-size:28px;margin:0;font-weight:700;letter-spacing:-.02em}
+.iconbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--card);display:grid;place-items:center;color:var(--muted);box-shadow:0 1px 0 var(--line)}
+.iconbtn svg{width:22px;height:22px}
+#toolbar{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+#toolbar:empty{display:none}
+
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper .iconbtn{flex:none}
+.stepper .daylabel{flex:1;text-align:center;font-weight:600;background:var(--card);border-radius:14px;height:44px;display:grid;place-items:center;box-shadow:0 1px 0 var(--line)}
+.stepper .daylabel small{font-weight:500;color:var(--muted);margin-left:6px}
+.iconbtn:disabled{opacity:.35}
+
+.search{position:relative}
+.search input{width:100%;height:48px;border-radius:14px;border:1.5px solid transparent;background:var(--card);padding:0 16px 0 44px;font-size:16px;box-shadow:0 1px 0 var(--line);outline:none}
+.search input:focus{border-color:var(--acc)}
+.search svg{position:absolute;left:14px;top:13px;width:22px;height:22px;color:var(--muted)}
+.tbrow{display:flex;gap:10px}
+.tbrow .search{flex:1}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:40px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-weight:600;font-size:15px;white-space:nowrap}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:7px}
+.chip .dot,.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.chips .sep{flex:none;width:2px;border-radius:1px;background:var(--line);margin:8px 2px}
+.chips.wrap{flex-wrap:wrap;overflow:visible}
+#filterbar[hidden]{display:none}
+.tname{width:100%;border:0;border-bottom:1.5px solid transparent;background:none;font-weight:600;font-size:16px;padding:2px 0;outline:none}
+.tname:focus{border-bottom-color:var(--acc)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 14px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--card);box-shadow:0 1px 0 var(--line)}
+.groupbar{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r);padding:12px 12px 12px 16px;margin:4px 0 12px;box-shadow:0 1px 0 var(--line)}
+.groupbar .grow{flex:1;min-width:0;font-size:15px}
+.groupbar small{display:block;color:var(--muted)}
+.ghostbtn{flex:none;height:48px;padding:0 16px;border-radius:14px;border:0;background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 1px 0 var(--line)}
+
+/* Body */
+#body{padding:6px 20px 20px}
+.hint{color:var(--muted);font-size:15px;margin:6px 4px 12px}
+.section{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:26px 4px 10px}
+.section:first-child{margin-top:8px}
+
+.row{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;background:var(--card);border:2px solid transparent;border-radius:var(--r);min-height:72px;text-align:left;margin-bottom:10px;box-shadow:0 1px 0 var(--line);transition:background .15s,border-color .15s}
+.row:active{transform:scale(.99)}
+.row.on{border-color:var(--acc);background:var(--acc-soft)}
+.av{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px}
+.av.lg{width:56px;height:56px;font-size:21px}
+.who{flex:1;min-width:0;display:flex;flex-direction:column}
+.who b{font-weight:600;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.check{flex:none;width:38px;height:38px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:transparent;transition:all .15s}
+.check svg{width:20px;height:20px}
+.row.on .check{background:var(--acc);border-color:var(--acc);color:#fff}
+
+.pill{flex:none;font-size:13px;font-weight:700;padding:5px 10px;border-radius:999px;white-space:nowrap}
+.pill.green{background:var(--green-bg);color:var(--green)}
+.pill.amber{background:var(--amber-bg);color:var(--amber)}
+.pill.red{background:var(--red-bg);color:var(--red)}
+.pill.gray{background:var(--gray-bg);color:var(--gray)}
+
+.smallbtn{flex:none;height:40px;padding:0 16px;border-radius:12px;border:0;background:var(--acc);color:#fff;font-weight:700;font-size:15px}
+.smallbtn.ghost{background:var(--gray-bg);color:var(--ink)}
+.addbtn{flex:none;height:48px;padding:0 18px;border-radius:14px;border:0;background:var(--acc);color:#fff;font-weight:700;display:flex;align-items:center;gap:6px}
+.addbtn svg{width:20px;height:20px}
+
+.banner{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:var(--r);background:var(--amber-bg);color:#5e3d00;padding:14px 16px;margin:4px 0 14px;font-size:15px}
+.banner b{margin-left:auto;flex:none;background:#fff;border-radius:10px;padding:8px 12px;color:var(--amber)}
+.banner.info{background:var(--gray-bg);color:var(--ink)}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border-radius:var(--r);padding:16px;box-shadow:0 1px 0 var(--line)}
+.tile .n{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.tile .l{color:var(--muted);font-size:14px}
+.tile.wide{grid-column:1/-1}
+
+.listcard{background:var(--card);border-radius:var(--r);box-shadow:0 1px 0 var(--line);overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);min-height:56px;width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left}
+.li:last-child{border-bottom:0}
+.li .grow{flex:1;min-width:0}
+.li small{display:block;color:var(--muted);font-size:14px}
+.x{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--gray-bg);color:var(--muted);display:grid;place-items:center}
+.x svg{width:16px;height:16px}
+
+.empty{text-align:center;color:var(--muted);padding:48px 16px}
+.empty h3{color:var(--ink);font-size:20px;margin:0 0 6px}
+.empty .btn{margin-top:18px}
+.loading{text-align:center;color:var(--muted);padding:60px 0}
+
+/* Tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+nav.tabs button{border:0;background:none;height:68px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:12.5px;font-weight:600;position:relative}
+nav.tabs button svg{width:25px;height:25px}
+nav.tabs button.on{color:var(--acc)}
+nav.tabs .dot{position:absolute;top:10px;left:calc(50% + 8px);min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;display:grid;place-items:center;padding:0 5px}
+
+/* Sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:50}
+.sheet-wrap[hidden]{display:none}
+.scrim{position:absolute;inset:0;background:rgba(20,20,20,.38);animation:fade .2s}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--bg);border-radius:26px 26px 0 0;max-height:92vh;overflow-y:auto;padding:10px 20px calc(24px + env(safe-area-inset-bottom));animation:up .25s cubic-bezier(.2,.8,.2,1)}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.sheethead{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.sheethead .grow{flex:1;min-width:0}
+.sheet h2{margin:0;font-size:22px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:4px 0 0;font-size:15px}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}}
+
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:14px;font-weight:600;color:var(--muted);margin:0 0 6px 2px}
+.field input,.field textarea{width:100%;height:52px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);padding:0 14px;font-size:16px;outline:none}
+.field textarea{height:84px;padding:12px 14px;resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--acc)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.toggle{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:14px;margin-bottom:16px;font-weight:600}
+.toggle input{width:22px;height:22px;accent-color:var(--acc)}
+
+.btn{display:flex;align-items:center;justify-content:center;width:100%;height:54px;border-radius:16px;border:0;background:var(--acc);color:#fff;font-weight:700;font-size:16px;margin-top:6px}
+.btn.ghost{background:var(--card);color:var(--ink);box-shadow:0 1px 0 var(--line)}
+.btn.reddel{background:var(--red);color:#fff}
+.btn.danger{background:var(--card);color:var(--red);box-shadow:0 1px 0 var(--line)}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.btnrow .btn{margin:0}
+
+.adjust{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:10px 12px;box-shadow:0 1px 0 var(--line)}
+.adjust .grow{flex:1}
+.adjust .x{width:44px;height:44px;font-size:22px;font-weight:700;color:var(--ink)}
+.adjust .val{min-width:34px;text-align:center;font-weight:700;font-size:18px}
+.inline{display:flex;gap:10px;align-items:center}
+.inline input{flex:1;height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);padding:0 12px;font-size:16px;min-width:0}
+
+.decide{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 0 var(--line)}
+.decide .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.decide .btnrow .btn{height:48px;font-size:15px}
+
+.note{background:var(--card);border-radius:14px;padding:12px 14px;color:var(--ink);white-space:pre-wrap;box-shadow:0 1px 0 var(--line)}
+.tips p{margin:0 0 10px}
+.copybox{width:100%;height:200px;border-radius:14px;border:1.5px solid var(--line);padding:12px;font-size:15px}
+
+/* Toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px 12px 18px;display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);width:max-content;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:fade .2s;font-size:15px}
+.toast[hidden]{display:none}
+.toast button{border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:10px;height:36px;padding:0 14px;font-weight:700}
+
+.daylabel{position:relative;cursor:pointer;overflow:hidden}
+.daylabel input{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;margin:0;cursor:pointer}
+.daylabel input::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.amt{flex:none;font-weight:700;font-variant-numeric:tabular-nums;font-size:16px}
+.amt.pos{color:var(--green)} .amt.neg{color:var(--muted)} .amt.red{color:var(--red)}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:22px 4px 8px}
+.mhead b{font-size:15px}
+.mhead span{font-size:14px;color:var(--muted);font-weight:600}
+.bal{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.ico{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:700}
+.ico.class{background:var(--gray-bg);color:var(--ink)}
+.ico.pay{background:var(--green-bg);color:var(--green)}
+.ico.adj{background:var(--amber-bg);color:var(--amber)}
+.stepper2{display:flex;align-items:center;justify-content:center;gap:18px;background:var(--card);border-radius:var(--r);padding:14px;box-shadow:0 1px 0 var(--line);margin-bottom:12px}
+.stepper2 .x{width:52px;height:52px;font-size:26px;font-weight:700;color:var(--ink)}
+.stepval{min-width:80px;text-align:center;font-size:32px;font-weight:700}
+.preview{background:var(--card);border-radius:14px;padding:12px 14px;margin:2px 0 14px;font-weight:600;box-shadow:0 1px 0 var(--line)}
+.preview small{display:block;color:var(--muted);font-weight:500}
+body.signedout nav.tabs, body.signedout #toolbar, body.signedout [data-act="settings"]{display:none}
+.login{background:var(--card);border-radius:22px;padding:22px;margin-top:10px;box-shadow:0 1px 0 var(--line)}
+.login h3{margin:0 0 4px;font-size:22px}
+.login .field input{background:var(--bg)}
+.err{color:var(--red);font-weight:600;margin:4px 2px 10px;font-size:15px}
+.linkbtn{border:0;background:none;color:var(--acc);font-weight:700;padding:14px 0 0;width:100%}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="titlebar">
+      <h1 id="title">Today</h1>
+      <button class="iconbtn" data-act="settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </div>
+    <div id="toolbar"></div>
+  </header>
+  <main id="body"></main>
+</div>
+
+<nav class="tabs"><div class="in" id="tabs"></div></nav>
+
+<div id="sheetWrap" class="sheet-wrap" hidden>
+  <div class="scrim" data-act="close"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const dstr = dt => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+const parseD = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d||1); };
+const addDays = (s,k) => { const d = parseD(s); d.setDate(d.getDate()+k); return dstr(d); };
+const addMonths = (m,k) => { let [y,mo] = m.split('-').map(Number); mo += k; while(mo<1){mo+=12;y--} while(mo>12){mo-=12;y++} return `${y}-${pad(mo)}`; };
+const TODAY = dstr(new Date());
+const CUR = TODAY.slice(0,7);
+const PREV = addMonths(CUR,-1);
+const NEXT = addMonths(CUR,1);
+const PAY_MONTHS = [addMonths(CUR,-3), addMonths(CUR,-2), PREV, CUR, NEXT];
+const monthName = m => parseD(m).toLocaleDateString('en-GB',{month:'long', year:'numeric'});
+const monthOnly = m => parseD(m).toLocaleDateString('en-GB',{month:'long'});
+const monthShort = m => parseD(m).toLocaleDateString('en-GB',{month:'short'}) + (m.slice(0,4)!==CUR.slice(0,4) ? ' ' + m.slice(2,4) : '');
+const dayShort = s => parseD(s).toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'short'});
+const dayLabel = s => s===TODAY ? 'Today' : s===addDays(TODAY,-1) ? 'Yesterday' : dayShort(s);
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+const classesTxt = n => `${n} class${Math.abs(n)===1?'':'es'}`;
+const signed = n => (n>0?'+':n<0?'−':'') + Math.abs(n);
+const balTxt = b => b>0 ? `${classesTxt(b)} left` : b<0 ? `owes ${classesTxt(-b)}` : '0 left';
+
+const ICON = {
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>',
+  pay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M7 15h3"/></svg>',
+  students:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.4 3.5 5.2"/></svg>',
+  summary:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+};
+const AV = [['#E2EFE8','#25603F'],['#FBEBDD','#8F4B12'],['#E5E9F8','#34478F'],['#F6E3EC','#8A2E5A'],['#EAE6F7','#523F95'],['#E0F0F2','#1F6670'],['#F4EED6','#6E5A0C']];
+function avatar(s, cls=''){
+  let h = 0; for (const ch of (s.name||'')) h = (h*31 + ch.charCodeAt(0)) >>> 0;
+  const [bg,fg] = AV[h % AV.length];
+  const ini = (s.name||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  return `<span class="av ${cls}" style="background:${bg};color:${fg}">${esc(ini)}</span>`;
+}
+
+/* ---------- state ---------- */
+const S = {
+  db:null, noDb:false, ready:false, stale:false, errMsg:'', readOnly:false,
+  students:{}, cards:{}, settings:{currency:''}, ver:0,
+  loadedS:false, loadedC:false,
+  tab:'today', date:TODAY, q:'', order:[],
+  sumMonth:CUR, showAll:{}, sheet:null,
+  filter:{topic:null, grade:null},
+};
+try { const f = JSON.parse(localStorage.getItem('ct_filter')||'null'); if (f) S.filter = {topic:f.topic||null, grade:f.grade||null}; } catch(e){}
+
+/* ---------- topics & filters ---------- */
+const topics = () => Array.isArray(S.settings.topics) ? S.settings.topics : [];
+const TCOL = ['#2E6B52','#C26A1B','#3A55B0','#A23B6E','#6A4BB8','#1F7A86','#8C7410','#B3372B'];
+const topicColor = id => { const i = topics().findIndex(t=>t.id===id); return TCOL[(i<0?0:i) % TCOL.length]; };
+const studentTopics = s => (s.topics||[]).map(id=>topics().find(t=>t.id===id)).filter(Boolean);
+const topicNames = s => studentTopics(s).map(t=>t.name).join(', ');
+const gradesList = () => [...new Set(activeStudents().map(s=>(s.grade||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+const filterActive = () => !!(S.filter.topic || S.filter.grade);
+function passFilter(s){
+  if (S.filter.topic && !(s.topics||[]).includes(S.filter.topic)) return false;
+  if (S.filter.grade && (s.grade||'').trim() !== S.filter.grade) return false;
+  return true;
+}
+function filterLabel(){
+  const t = topics().find(x=>x.id===S.filter.topic);
+  return [t && t.name, S.filter.grade].filter(Boolean).join(' · ');
+}
+function saveFilter(){ try { localStorage.setItem('ct_filter', JSON.stringify(S.filter)); } catch(e){} }
+function saveSettings(){ return writeDoc('settings/app', S.settings); }
+const topicChip = (t, on) => `<button type="button" class="chip ${on?'on':''}" data-act="topicToggle" data-v="${t.id}"><span class="dot" style="background:${topicColor(t.id)}"></span>${esc(t.name)}</button>`;
+function createTopic(name){
+  name = (name||'').trim(); if (!name) return null;
+  const found = topics().find(t=>t.name.toLowerCase()===name.toLowerCase());
+  if (found) return found;
+  const t = {id:'t'+newId(), name};
+  S.settings = {...S.settings, topics:[...topics(), t]};
+  saveSettings();
+  return t;
+}
+function renderFilterBar(){
+  const el = $('#filterbar'); if (!el) return;
+  if (!S.ready){ el.hidden = true; return; }
+  const ts = topics(), gs = gradesList();
+  if (S.filter.topic && !ts.find(t=>t.id===S.filter.topic)) S.filter.topic = null;
+  if (S.filter.grade && !gs.includes(S.filter.grade)) S.filter.grade = null;
+  if (!ts.length && gs.length < 2){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  const sl = el.scrollLeft;
+  let h = `<button class="chip ${!filterActive()?'on':''}" data-act="filter" data-kind="all">All</button>`;
+  h += ts.map(t=>`<button class="chip ${S.filter.topic===t.id?'on':''}" data-act="filter" data-kind="topic" data-v="${t.id}"><span class="dot" style="background:${topicColor(t.id)}"></span>${esc(t.name)}</button>`).join('');
+  if (ts.length && gs.length) h += '<span class="sep"></span>';
+  h += gs.map(g=>`<button class="chip ${S.filter.grade===g?'on':''}" data-act="filter" data-kind="grade" data-v="${esc(g)}">${esc(g)}</button>`).join('');
+  el.innerHTML = h; el.scrollLeft = sl;
+}
+
+/* ---------- cards & the running balance ----------
+   A card holds one student's activity for one month: visits (class dates),
+   payments ({d, amount, classes, ts}; the card's month is the month it pays for)
+   and adjustments ({d, n, note, ts}).
+   Balance = every class bought + every adjustment − every class attended, across
+   all months, so leftovers and debts carry over by themselves. */
+const cardKey = (m,sid) => `${m}_${sid}`;
+function blankCard(m,sid){ return {studentId:sid, month:m, visits:[], payments:[], adjustments:[]}; }
+function getCard(m,sid){ return S.cards[cardKey(m,sid)] || blankCard(m,sid); }
+function cardDelta(c){
+  let n = 0;
+  (c.payments||[]).forEach(p=>{ n += +p.classes||0; });
+  (c.adjustments||[]).forEach(a=>{ n += +a.n||0; });
+  n -= (c.visits||[]).length;
+  // Data saved by the earlier month-by-month version: "carry" only moved classes
+  // between months (the running total already does that), so it is ignored.
+  n += +c.adjust||0;
+  if (c.settled && c.settled.action==='drop' && +c.settled.n>0) n -= +c.settled.n;
+  if (c.settled && c.settled.action==='clear' && +c.settled.n<0) n += -c.settled.n;
+  return n;
+}
+function monthStats(c){
+  const pays = c.payments || [];
+  return {
+    money: pays.reduce((a,p)=>a+(+p.amount||0),0),
+    paidClasses: pays.reduce((a,p)=>a+(+p.classes||0),0),
+    used: (c.visits||[]).length,
+    isPaid: pays.length>0,
+  };
+}
+let IDX = {ver:-1, map:{}};
+function cardsOf(sid){
+  if (IDX.ver !== S.ver){
+    const map = {};
+    Object.values(S.cards).forEach(c=>{ (map[c.studentId] = map[c.studentId] || []).push(c); });
+    Object.values(map).forEach(a=>a.sort((x,y)=>x.month.localeCompare(y.month)));
+    IDX = {ver:S.ver, map};
+  }
+  return IDX.map[sid] || [];
+}
+const balance = (sid, upTo) => cardsOf(sid).reduce((a,c)=> (!upTo || c.month<=upTo) ? a+cardDelta(c) : a, 0);
+const everPaid = sid => cardsOf(sid).some(c=>(c.payments||[]).length);
+function status(sid){
+  const b = balance(sid);
+  if (b < 0) return {cls:'red', label:`owes ${-b}`};
+  if (b === 0) return everPaid(sid) ? {cls:'amber', label:'0 left'} : {cls:'gray', label:'Not paid'};
+  return {cls:'green', label:`${b} left`};
+}
+function lifetime(sid){
+  let bought=0, used=0, adj=0;
+  cardsOf(sid).forEach(c=>{ const st = monthStats(c); bought += st.paidClasses; used += st.used; adj += cardDelta(c) - st.paidClasses + st.used; });
+  return {bought, used, adj};
+}
+const money = n => { const c = (S.settings.currency||'').trim(); const v = (+n||0).toLocaleString('en-US',{maximumFractionDigits:2}); return c ? `${c} ${v}` : v; };
+const activeStudents = () => Object.values(S.students).filter(s=>!s.archived);
+const byName = (a,b) => (a.name||'').localeCompare(b.name||'');
+
+function computeOrder(){
+  const score = id => getCard(PREV,id).visits.length + getCard(CUR,id).visits.length*1.5;
+  S.order = activeStudents().sort((a,b)=>score(b.id)-score(a.id) || byName(a,b)).map(s=>s.id);
+}
+function orderedActive(){
+  const pos = new Map(S.order.map((id,i)=>[id,i]));
+  return activeStudents().sort((a,b)=>{
+    const pa = pos.has(a.id)?pos.get(a.id):-1, pb = pos.has(b.id)?pos.get(b.id):-1; // new students first
+    return pa-pb || byName(a,b);
+  });
+}
+function allPayments(id){
+  const out = [];
+  cardsOf(id).forEach(c=>(c.payments||[]).forEach((p,i)=>out.push({...p, m:c.month, i})));
+  return out;
+}
+function lastPayment(id){
+  const all = allPayments(id); if (!all.length) return null;
+  return all.sort((a,b)=>(b.ts||0)-(a.ts||0) || (b.d||'').localeCompare(a.d||''))[0];
+}
+
+/* ---------- saving ---------- */
+function writeDoc(path, data){
+  return S.db.doc(path).set(data).catch(handleWriteErr);
+}
+function handleWriteErr(e){
+  const code = e && e.code;
+  if (code === 'permission-denied'){ S.readOnly = true; render(); toast("You can view this app but not change it. Ask the owner for edit access."); }
+  else if (code === 'quota_exceeded'){ toast('Storage is full — delete some old archived students.'); }
+  else toast("Couldn't save. Check your internet and try again.");
+}
+function guard(){ if (S.readOnly){ toast('View only — changes are turned off for you.'); return true; } if(!S.db){ toast('Not connected yet.'); return true; } return false; }
+
+function updateCard(m, sid, fn){
+  const key = cardKey(m,sid);
+  const before = S.cards[key] ? structuredClone(S.cards[key]) : null;
+  const c = before ? structuredClone(before) : blankCard(m,sid);
+  c.visits = c.visits || []; c.payments = c.payments || []; c.adjustments = c.adjustments || [];
+  fn(c);
+  S.cards[key] = c; S.ver++;
+  render();
+  writeDoc('cards/'+key, c);
+  return before || blankCard(m,sid);
+}
+function restoreCard(m, sid, prev){
+  const key = cardKey(m,sid);
+  S.cards[key] = prev; S.ver++; render();
+  writeDoc('cards/'+key, prev);
+}
+function saveStudent(st){ S.students[st.id] = st; render(); return writeDoc('students/'+st.id, st); }
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg, undo){
+  const t = $('#toast');
+  t.innerHTML = `<span>${esc(msg)}</span>` + (undo ? '<button data-act="undo">Undo</button>' : '');
+  t.hidden = false; S.undo = undo || null;
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.hidden = true; S.undo = null; }, undo ? 5000 : 3200);
+}
+
+/* ---------- tabs & toolbar ---------- */
+const TABS = [['today','Today','today'],['pay','Payments','pay'],['students','Students','students'],['summary','Summary','summary']];
+function renderTabs(){
+  const unpaid = S.ready ? activeStudents().filter(s=>!getCard(CUR,s.id).payments.length).length : 0;
+  $('#tabs').innerHTML = TABS.map(([k,l,i])=>`<button class="${S.tab===k?'on':''}" data-act="tab" data-tab="${k}">${ICON[i]}<span>${l}</span>${k==='pay'&&unpaid?`<span class="dot">${unpaid}</span>`:''}</button>`).join('');
+}
+function renderToolbar(){
+  const tb = $('#toolbar');
+  $('#title').textContent = ({today:'Attendance', pay:'Payments', students:'Students', summary:'Summary'})[S.tab];
+  if (S.tab === 'today'){
+    tb.innerHTML = `<div class="stepper">
+        <button class="iconbtn" data-act="day" data-k="-1" aria-label="Previous day">${ICON.left}</button>
+        <label class="daylabel"><span id="daytext"></span><input type="date" id="dayPick" max="${TODAY}" aria-label="Pick a day"></label>
+        <button class="iconbtn" data-act="day" data-k="1" aria-label="Next day">${ICON.right}</button>
+      </div>
+      <div class="search">${ICON.search}<input id="q" type="search" placeholder="Find a student" autocomplete="off" value="${esc(S.q)}"></div>
+      <div class="chips" id="filterbar" hidden></div>`;
+    updateDayLabel();
+  } else if (S.tab === 'students'){
+    tb.innerHTML = `<div class="tbrow"><div class="search">${ICON.search}<input id="q" type="search" placeholder="Search" autocomplete="off" value="${esc(S.q)}"></div><button class="ghostbtn" data-act="topics">Topics</button><button class="addbtn" data-act="addStudent">${ICON.plus}Add</button></div>
+      <div class="chips" id="filterbar" hidden></div>`;
+  } else if (S.tab === 'pay'){
+    tb.innerHTML = `<div class="chips" id="filterbar" hidden></div>`;
+  } else if (S.tab === 'summary'){
+    const ms = []; for (let i=0;i<12;i++) ms.push(addMonths(CUR,-i));
+    tb.innerHTML = `<div class="chips">${ms.map(m=>`<button class="chip ${m===S.sumMonth?'on':''}" data-act="sumMonth" data-m="${m}">${monthShort(m)}</button>`).join('')}</div>`;
+  } else tb.innerHTML = '';
+  const q = $('#q'); if (q) q.addEventListener('input', e=>{ S.q = e.target.value; render(); });
+}
+function updateDayLabel(){
+  const el = $('#daytext'); if (!el) return;
+  el.innerHTML = S.date===TODAY ? `Today<small>${dayShort(TODAY)}</small>` : `${esc(dayLabel(S.date))}<small style="color:var(--acc)">tap to change</small>`;
+  const pick = $('#dayPick'); if (pick) pick.value = S.date;
+  const next = document.querySelector('[data-act="day"][data-k="1"]'); if (next) next.disabled = S.date >= TODAY;
+}
+function setDate(d){
+  if (!d || d > TODAY) return;
+  S.date = d; updateDayLabel(); render();
+}
+function setTab(t){
+  S.tab = t; S.q = '';
+  if (t === 'today') computeOrder();
+  renderToolbar(); render(); window.scrollTo(0,0);
+}
+
+/* ---------- views ---------- */
+function render(){
+  renderTabs();
+  renderFilterBar();
+  const body = $('#body');
+  document.body.classList.toggle('signedout', S.auth !== 'in');
+  if (S.noDb){
+    body.innerHTML = `<div class="empty"><h3>Almost there</h3>This copy isn't connected to Firebase yet. Paste your Firebase settings into <b>firebase-config.js</b> (see README).</div>`;
+    return;
+  }
+  if (S.auth === 'checking'){ body.innerHTML = '<div class="loading">Loading…</div>'; return; }
+  if (S.auth === 'out'){ $('#title').textContent = 'Welcome'; body.innerHTML = viewLogin(); return; }
+  if (!S.ready){
+    body.innerHTML = S.stale ? `<div class="empty"><h3>Can't reach your data yet</h3>${esc(S.errMsg||'Check your internet connection. It will load by itself once it connects.')}</div>` : '<div class="loading">Loading…</div>';
+    return;
+  }
+  let h = '';
+  if (S.readOnly) h += `<div class="banner info">You can view this, but changes are turned off for your account.</div>`;
+  h += ({today:viewToday, pay:viewPay, students:viewStudents, summary:viewSummary})[S.tab]();
+  body.innerHTML = h;
+  if (S.sheet && S.sheet.live) openSheet(S.sheet.type, S.sheet.arg, true);
+}
+
+function viewLogin(){
+  return `<div class="login"><h3>Class Tracker</h3><p class="sub" style="margin:0 0 18px">Sign in to see your students.</p>
+    <label class="field"><span>Email</span><input id="lEmail" type="email" autocomplete="username" inputmode="email" value="${esc(S.lastEmail||'')}"></label>
+    <label class="field"><span>Password</span><input id="lPass" type="password" autocomplete="current-password"></label>
+    ${S.loginErr ? `<div class="err">${esc(S.loginErr)}</div>` : ''}
+    <button class="btn" data-act="login">Sign in</button>
+    <button class="linkbtn" data-act="forgot">Forgot password?</button></div>`;
+}
+function downloadBackup(){
+  const data = { app:'class-tracker', version:1, exported:new Date().toISOString(), settings:S.settings, students:S.students, cards:S.cards };
+  const blob = new Blob([JSON.stringify(data, null, 1)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `class-tracker-backup-${TODAY}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  toast('Backup downloaded');
+}
+async function restoreBackup(file){
+  if (guard()) return;
+  let data;
+  try { data = JSON.parse(await file.text()); } catch(e){ toast("That file isn't a backup from this app."); return; }
+  if (!data || data.app !== 'class-tracker' || typeof data.students !== 'object' || typeof data.cards !== 'object'){ toast("That file isn't a backup from this app."); return; }
+  const ok = /^[A-Za-z0-9_-]{1,100}$/;
+  let n = 0;
+  if (data.settings && typeof data.settings === 'object'){ S.settings = {currency:'', ...data.settings}; saveSettings(); }
+  for (const [id, st] of Object.entries(data.students)) if (ok.test(id) && st && typeof st === 'object'){ writeDoc('students/'+id, {...st, id}); n++; }
+  for (const [k, c] of Object.entries(data.cards)) if (ok.test(k) && c && typeof c === 'object' && c.studentId && c.month) writeDoc('cards/'+k, c);
+  closeSheet(); toast(`Restored ${n} students from the backup`);
+}
+function emptyStudents(){
+  return `<div class="empty"><h3>No students yet</h3>Add your students once, then just tap them when they come.<button class="btn" data-act="addStudent">Add your first student</button></div>`;
+}
+
+function viewToday(){
+  const all = orderedActive();
+  if (!all.length) return emptyStudents();
+  const m = S.date.slice(0,7);
+  let h = '';
+  if (S.date !== TODAY) h += `<button class="banner" data-act="goToday"><span>You're marking <b style="background:none;padding:0;margin:0;color:inherit">${esc(dayShort(S.date))}</b>. Balances update right away.</span><b>Back to today</b></button>`;
+  const group = all.filter(passFilter);
+  const isMarked = s => getCard(m,s.id).visits.includes(S.date);
+  const when = S.date===TODAY ? 'today' : 'on '+dayShort(S.date);
+  if (filterActive()){
+    const left = group.filter(s=>!isMarked(s)).length;
+    h += `<div class="groupbar"><div class="grow"><b>${esc(filterLabel())}</b><small>${group.length-left} of ${group.length} marked ${when}</small></div>${left && !S.readOnly ? `<button class="smallbtn" style="height:48px" data-act="markAll">Mark all ${left}</button>` : ''}</div>`;
+  } else {
+    const marked = group.filter(isMarked).length;
+    h += `<div class="hint">${marked ? `<b style="color:var(--acc)">${marked} marked</b> ${when} · tap again to unmark` : 'Tap a student when they come to class'}</div>`;
+  }
+  const q = S.q.trim().toLowerCase();
+  const list = q ? group.filter(s=>(s.name||'').toLowerCase().includes(q)) : group;
+  h += list.map(s=>{
+    const c = getCard(m,s.id), on = c.visits.includes(S.date), ss = status(s.id);
+    const times = c.visits.filter(d=>d===S.date).length;
+    const sub = [esc(s.grade||''), esc(topicNames(s))].filter(Boolean).join(' · ') || '&nbsp;';
+    return `<button class="row ${on?'on':''}" data-act="toggle" data-id="${s.id}">
+      ${avatar(s)}
+      <span class="who"><b>${esc(s.name)}</b><small>${sub}${times>1?` · ×${times}`:''}</small></span>
+      <span class="pill ${ss.cls}">${ss.label}</span>
+      <span class="check">${ICON.check}</span></button>`;
+  }).join('');
+  if (q && !list.length) h += `<div class="empty">No student called “${esc(S.q)}”.</div>`;
+  else if (!list.length) h += `<div class="empty">No students in this group.</div>`;
+  return h;
+}
+
+function viewPay(){
+  if (!activeStudents().length) return emptyStudents();
+  const act = activeStudents().filter(passFilter).sort(byName);
+  if (!act.length) return `<div class="empty">No students in this group.</div>`;
+  const unpaid = act.filter(s=>!getCard(CUR,s.id).payments.length);
+  const paid = act.filter(s=>getCard(CUR,s.id).payments.length);
+  const total = filterActive()
+    ? act.reduce((a,s)=>a+monthStats(getCard(CUR,s.id)).money,0)
+    : Object.values(S.cards).filter(c=>c.month===CUR).reduce((a,c)=>a+monthStats(c).money,0);
+  let h = `<div class="tiles"><div class="tile"><div class="n">${money(total)}</div><div class="l">Collected for ${monthOnly(CUR)}${filterActive()?' · '+esc(filterLabel()):''}</div></div><div class="tile"><div class="n">${paid.length}<span style="color:var(--muted);font-size:18px"> / ${act.length}</span></div><div class="l">Students paid</div></div></div>`;
+  h += `<div class="section">Not paid for ${monthOnly(CUR)}${unpaid.length?' · '+unpaid.length:''}</div>`;
+  if (!unpaid.length) h += `<div class="listcard"><div class="li"><div class="grow">Everyone has paid for ${monthOnly(CUR)} 🎉</div></div></div>`;
+  else h += unpaid.map(s=>{ const b = balance(s.id);
+    return `<div class="row" style="cursor:default">${avatar(s)}<span class="who" data-act="detail" data-id="${s.id}" style="cursor:pointer"><b>${esc(s.name)}</b><small>${b ? balTxt(b) : 'No classes left'}</small></span><button class="smallbtn" data-act="pay" data-id="${s.id}">Paid</button></div>`; }).join('');
+  if (paid.length){
+    h += `<div class="section">Paid</div><div class="listcard">`;
+    h += paid.map(s=>{ const c=getCard(CUR,s.id), st=monthStats(c), last=c.payments[c.payments.length-1], ss=status(s.id);
+      return `<button class="li" data-act="detail" data-id="${s.id}">${avatar(s)}<div class="grow"><b>${esc(s.name)}</b><small>${money(st.money)} · ${classesTxt(st.paidClasses)} · ${dayShort(last.d)}${c.payments.length>1?' · '+c.payments.length+' payments':''}</small></div><span class="pill ${ss.cls}">${ss.label}</span></button>`; }).join('');
+    h += `</div>`;
+  }
+  return h;
+}
+
+function viewStudents(){
+  const all = Object.values(S.students).sort(byName);
+  if (!all.length) return emptyStudents();
+  const q = S.q.trim().toLowerCase();
+  const match = s => passFilter(s) && (!q || (s.name||'').toLowerCase().includes(q) || (s.grade||'').toLowerCase().includes(q) || topicNames(s).toLowerCase().includes(q));
+  const act = all.filter(s=>!s.archived && match(s)), arch = all.filter(s=>s.archived && match(s));
+  let h = `<div class="hint">${filterActive() ? `<b>${esc(filterLabel())}</b> · ${act.length} student${act.length===1?'':'s'}` : `${act.length} active student${act.length===1?'':'s'} · tap one for details`}</div>`;
+  h += act.map(s=>{ const ss=status(s.id);
+    const sub = [esc(s.grade||''), esc(topicNames(s))].filter(Boolean).join(' · ') || '&nbsp;';
+    return `<button class="row" data-act="detail" data-id="${s.id}">${avatar(s)}<span class="who"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pill ${ss.cls}">${ss.label}</span></button>`; }).join('');
+  if (!act.length && !arch.length) h += `<div class="empty">${q ? 'No match.' : 'No students in this group.'}</div>`;
+  if (arch.length){
+    h += `<div class="section">Archived · ${arch.length}</div><div class="listcard">` + arch.map(s=>{ const b = balance(s.id);
+      return `<button class="li" data-act="detail" data-id="${s.id}">${avatar(s)}<div class="grow"><b>${esc(s.name)}</b><small>${[esc(s.grade||''), b ? balTxt(b) : ''].filter(Boolean).join(' · ')||'&nbsp;'}</small></div></button>`; }).join('') + `</div>`;
+  }
+  return h;
+}
+
+function summaryData(m){
+  const endOfMonth = addMonths(m,1) + '-01';
+  const cards = Object.values(S.cards).filter(c=>c.month===m);
+  const cardOf = {}; cards.forEach(c=>cardOf[c.studentId]=c);
+  const relevant = Object.values(S.students).filter(s=> ((s.created||'') < endOfMonth || cardOf[s.id]) && (!s.archived || cardOf[s.id]));
+  let collected=0, classes=0, payers=0; const notPaid=[], owe=[], left=[];
+  relevant.forEach(s=>{
+    const st = monthStats(cardOf[s.id] || blankCard(m,s.id));
+    collected += st.money; classes += st.used; if (st.isPaid) payers++;
+    if (!st.isPaid && !s.archived) notPaid.push(s.name);
+    const b = balance(s.id, m);
+    if (b < 0) owe.push([s.name, -b]); else if (b > 0) left.push([s.name, b]);
+  });
+  // money/classes from students deleted or not counted above
+  cards.filter(c=>!relevant.find(s=>s.id===c.studentId)).forEach(c=>{ const st=monthStats(c); collected+=st.money; classes+=st.used; });
+  return {collected, classes, payers, total:relevant.length, notPaid:notPaid.sort(), owe:owe.sort((a,b)=>b[1]-a[1]), left:left.sort((a,b)=>b[1]-a[1])};
+}
+function viewSummary(){
+  const m = S.sumMonth, d = summaryData(m);
+  const when = m===CUR ? 'right now' : `at the end of ${monthOnly(m)}`;
+  const list = (arr, fmt, emptyTxt) => arr.length ? `<div class="listcard">${arr.map(x=>`<div class="li"><div class="grow">${fmt(x)}</div></div>`).join('')}</div>` : `<div class="listcard"><div class="li"><div class="grow" style="color:var(--muted)">${emptyTxt}</div></div></div>`;
+  let h = `<div class="tiles">
+    <div class="tile wide"><div class="n">${money(d.collected)}</div><div class="l">Collected for ${monthName(m)}</div></div>
+    <div class="tile"><div class="n">${d.classes}</div><div class="l">Classes given</div></div>
+    <div class="tile"><div class="n">${d.payers}<span style="color:var(--muted);font-size:18px"> / ${d.total}</span></div><div class="l">Students paid</div></div>
+  </div>`;
+  h += `<div class="section">Not paid for ${monthOnly(m)}</div>` + list(d.notPaid, n=>esc(n), 'Nobody — all paid');
+  h += `<div class="section">Owe classes ${when}</div>` + list(d.owe, ([n,k])=>`${esc(n)} <span class="pill red" style="float:right">owes ${k}</span>`, 'Nobody');
+  h += `<div class="section">Classes left ${when}</div>` + list(d.left, ([n,k])=>`${esc(n)} <span class="pill green" style="float:right">${k} left</span>`, 'None');
+  h += `<button class="btn ghost" style="margin-top:22px" data-act="copyReport">Copy report to send</button>`;
+  return h;
+}
+function reportText(){
+  const m = S.sumMonth, d = summaryData(m);
+  const lines = [`Class report — ${monthName(m)}`, '', `Collected: ${money(d.collected)} (${d.payers} of ${d.total} students paid)`, `Classes given: ${d.classes}`];
+  if (d.notPaid.length) lines.push(`Not paid: ${d.notPaid.join(', ')}`);
+  if (d.owe.length) lines.push(`Owe classes: ${d.owe.map(([n,k])=>`${n} (${k})`).join(', ')}`);
+  if (d.left.length) lines.push(`Classes left: ${d.left.map(([n,k])=>`${n} (${k})`).join(', ')}`);
+  return lines.join('\n');
+}
+
+/* ---------- sheets ---------- */
+function openSheet(type, arg, refresh){
+  const live = ['detail','topicStudents'].includes(type);
+  const html = SHEETS[type](arg);
+  if (html == null){ closeSheet(); return; }
+  const el = $('#sheet');
+  const scroll = refresh ? el.scrollTop : 0;
+  el.innerHTML = `<div class="grab"></div>` + html;
+  S.sheet = {type, arg, live};
+  $('#sheetWrap').hidden = false;
+  if (refresh) el.scrollTop = scroll; else { el.scrollTop = 0; const f = el.querySelector('[autofocus]'); if (f && !('ontouchstart' in window)) f.focus(); }
+}
+function closeSheet(){ $('#sheetWrap').hidden = true; S.sheet = null; }
+
+function ledgerMonths(id){
+  // one group per month that has activity, newest first, with the balance at the end of it
+  let run = 0;
+  const groups = cardsOf(id).map(c=>{
+    run += cardDelta(c);
+    const items = [];
+    (c.visits||[]).forEach((d,i)=>items.push({kind:'class', d, i, n:-1, ts:0}));
+    (c.payments||[]).forEach((p,i)=>items.push({kind:'pay', d:p.d, i, n:+p.classes||0, p, ts:p.ts||0}));
+    (c.adjustments||[]).forEach((a,i)=>items.push({kind:'adj', d:a.d, i, n:+a.n||0, a, ts:a.ts||0}));
+    if (+c.adjust) items.push({kind:'old', d:c.month+'-01', n:+c.adjust, txt:'Adjustment'});
+    if (c.settled && c.settled.action==='drop' && +c.settled.n>0) items.push({kind:'old', d:c.month+'-28', n:-c.settled.n, txt:'Leftover classes dropped'});
+    if (c.settled && c.settled.action==='clear' && +c.settled.n<0) items.push({kind:'old', d:c.month+'-28', n:-c.settled.n, txt:'Extra classes let go'});
+    items.sort((a,b)=>(b.d||'').localeCompare(a.d||'') || b.ts-a.ts);
+    return {m:c.month, end:run, items};
+  }).filter(g=>g.items.length);
+  return groups.reverse();
+}
+function ledgerItem(id, m, it){
+  const rm = it.kind==='old' ? '' : `<button class="x" data-act="rmEntry" data-id="${id}" data-m="${m}" data-kind="${it.kind}" data-i="${it.i}" aria-label="Remove">${ICON.x}</button>`;
+  const amt = it.n===0 ? '' : `<span class="amt ${it.n>0?'pos':'neg'}">${signed(it.n)}</span>`;
+  if (it.kind==='class') return `<div class="li"><span class="ico class">✓</span><div class="grow"><b>Class</b><small>${dayShort(it.d)}</small></div>${amt}${rm}</div>`;
+  if (it.kind==='pay'){ const other = it.d && it.d.slice(0,7)!==m ? ` · for ${monthOnly(m)}` : '';
+    return `<div class="li"><span class="ico pay">$</span><div class="grow"><b>Paid ${money(it.p.amount)}</b><small>${dayShort(it.d)}${other}</small></div>${amt}${rm}</div>`; }
+  if (it.kind==='adj') return `<div class="li"><span class="ico adj">±</span><div class="grow"><b>${esc(it.a.note||'Balance adjusted')}</b><small>${dayShort(it.d)}</small></div>${amt}${rm}</div>`;
+  return `<div class="li"><span class="ico adj">±</span><div class="grow"><b>${esc(it.txt)}</b><small>${monthName(m)}</small></div>${amt}</div>`;
+}
+const balanceAfterHTML = (before, after) => `<div class="preview" id="preview">Balance: ${balTxt(before)} → <span style="color:${after<0?'var(--red)':'var(--green)'}">${balTxt(after)}</span></div>`;
+
+const closeBtn = `<button class="x" data-act="close" aria-label="Close">${ICON.x}</button>`;
+const ADJ_REASONS = ['Free class','Make-up class','Dropped unused classes','Forgiven','Refunded','Starting balance'];
+const SHEETS = {
+  student(id){
+    const s = id ? S.students[id] : {};
+    if (id && !s) return null;
+    return `<div class="sheethead"><div class="grow"><h2>${id?'Edit student':'New student'}</h2></div>${closeBtn}</div>
+      <label class="field"><span>Name</span><input id="fName" value="${esc(s.name||'')}" placeholder="e.g. Sara Ahmed" autocomplete="off" autofocus></label>
+      <label class="field"><span>Grade / level (optional)</span><input id="fGrade" value="${esc(s.grade||'')}" placeholder="e.g. Grade 7" autocomplete="off" list="gradeOpts"></label>
+      <datalist id="gradeOpts">${gradesList().map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
+      <div class="field"><span>Topics</span>
+        <div class="chips wrap" id="fTopics">${topics().map(t=>topicChip(t, (s.topics||[]).includes(t.id))).join('')}</div>
+        ${topics().length ? '' : `<p class="sub" style="margin:0 2px">No topics yet. Add them from the <b>Topics</b> button on the Students screen.</p>`}
+      </div>
+      <label class="field"><span>Parent's phone (optional)</span><input id="fPhone" type="tel" value="${esc(s.phone||'')}" autocomplete="off"></label>
+      <label class="field"><span>Note (optional)</span><textarea id="fNote">${esc(s.note||'')}</textarea></label>
+      <button class="btn" data-act="saveStudent" data-id="${id||''}">${id?'Save changes':'Add student'}</button>
+      ${id?`<button class="btn danger" data-act="archive" data-id="${id}">${s.archived?'Bring back from archive':'Archive (stopped coming)'}</button>`:''}
+      ${id && s.archived ? `<button class="btn danger" data-act="askDelete" data-id="${id}">Delete permanently</button>` : ''}`;
+  },
+  pay(id){
+    const s = S.students[id]; if (!s) return null;
+    const lp = lastPayment(id), b = balance(id);
+    const amt = lp ? lp.amount : (s.price ?? ''), cls = lp ? lp.classes : (s.classes ?? '');
+    return `<div class="sheethead"><div class="grow"><h2>${esc(s.name)} paid</h2><p class="sub">${lp?'Filled in from their last payment':'Record a payment'}</p></div>${closeBtn}</div>
+      <div class="field"><span>For which month</span><div class="chips" id="fMonth">${PAY_MONTHS.map(m=>`<button type="button" class="chip ${m===CUR?'on':''}" data-act="payMonth" data-m="${m}">${monthShort(m)}</button>`).join('')}</div></div>
+      <div class="grid2">
+        <label class="field"><span>Amount</span><input id="fAmt" type="number" inputmode="decimal" value="${esc(amt)}"></label>
+        <label class="field"><span>Classes it covers</span><input id="fCls" type="number" inputmode="numeric" value="${esc(cls)}" data-bal="${b}"></label>
+      </div>
+      <label class="field"><span>Date they paid</span><input id="fPayDate" type="date" max="${TODAY}" value="${TODAY}"></label>
+      ${balanceAfterHTML(b, b + (num(cls)||0))}
+      <button class="btn" data-act="confirmPay" data-id="${id}">Save payment</button>`;
+  },
+  visit(id){
+    const s = S.students[id]; if (!s) return null;
+    const b = balance(id), y = addDays(TODAY,-1);
+    const quick = [[TODAY,'Today'],[y,'Yesterday'],[addDays(TODAY,-2),'2 days ago'],[addDays(TODAY,-3),'3 days ago']];
+    return `<div class="sheethead"><div class="grow"><h2>Add a class</h2><p class="sub">${esc(s.name)} · for a day you forgot to mark</p></div>${closeBtn}</div>
+      <div class="field"><span>When</span><div class="chips wrap" id="fVisitQuick">${quick.map(([d,l])=>`<button type="button" class="chip ${d===y?'on':''}" data-act="visitQuick" data-d="${d}">${l}</button>`).join('')}</div></div>
+      <label class="field"><span>Or pick the date</span><input id="fVisit" type="date" max="${TODAY}" value="${y}"></label>
+      ${balanceAfterHTML(b, b-1)}
+      <button class="btn" data-act="addVisit" data-id="${id}">Add class</button>`;
+  },
+  adjust(id){
+    const s = S.students[id]; if (!s) return null;
+    const b = balance(id);
+    return `<div class="sheethead"><div class="grow"><h2>Adjust balance</h2><p class="sub">${esc(s.name)} · ${balTxt(b)}</p></div>${closeBtn}</div>
+      <div class="stepper2"><button class="x" data-act="adjStep" data-k="-1" aria-label="Fewer">−</button><span class="stepval" id="adjVal" data-n="0" data-bal="${b}">0</span><button class="x" data-act="adjStep" data-k="1" aria-label="More">+</button></div>
+      ${b ? `<button class="btn ghost" style="margin:0 0 14px" data-act="adjZero">Clear balance to 0 (${signed(-b)})</button>` : ''}
+      <div class="field"><span>Reason (optional)</span><div class="chips wrap" style="margin-bottom:10px">${ADJ_REASONS.map(r=>`<button type="button" class="chip" data-act="adjReason">${r}</button>`).join('')}</div>
+        <input id="adjNote" class="tname" style="height:48px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);padding:0 14px;font-weight:500" placeholder="Or type a reason" autocomplete="off"></div>
+      ${balanceAfterHTML(b, b)}
+      <button class="btn" data-act="saveAdj" data-id="${id}">Save</button>`;
+  },
+  detail(id){
+    const s = S.students[id]; if (!s) return null;
+    const b = balance(id), lt = lifetime(id), cm = monthStats(getCard(CUR,id));
+    let h = `<div class="sheethead">${avatar(s,'lg')}<div class="grow"><h2>${esc(s.name)}</h2><p class="sub">${[esc(s.grade||''), s.phone?esc(s.phone):''].filter(Boolean).join(' · ')||'&nbsp;'}</p></div>${closeBtn}</div>`;
+    const sts = studentTopics(s);
+    if (sts.length) h += `<div class="tags">${sts.map(t=>`<span class="tag"><span class="dot" style="background:${topicColor(t.id)}"></span>${esc(t.name)}</span>`).join('')}</div>`;
+    if (s.archived) h += `<div class="banner info">Archived — not shown on the attendance list.</div>`;
+    h += `<div class="tiles">
+      <div class="tile wide"><div class="bal" style="color:${b<0?'var(--red)':b>0?'var(--green)':'var(--ink)'}">${b<0?`Owes ${classesTxt(-b)}`:b>0?`${classesTxt(b)} left`:'0 classes left'}</div>
+        <div class="l" style="margin-top:6px">Bought ${lt.bought} · attended ${lt.used}${lt.adj?` · adjusted ${signed(lt.adj)}`:''} · carries over automatically</div></div>
+      <div class="tile"><div class="n">${cm.used}</div><div class="l">Classes in ${monthOnly(CUR)}</div></div>
+      <div class="tile"><div class="n" style="font-size:20px;padding:4px 0">${cm.isPaid?`<span class="pill green" style="font-size:14px">Paid ${money(cm.money)}</span>`:'<span class="pill gray" style="font-size:14px">Not paid</span>'}</div><div class="l">For ${monthOnly(CUR)}</div></div>
+    </div>`;
+    h += `<div class="btnrow" style="margin-top:12px"><button class="btn" data-act="pay" data-id="${id}">${cm.isPaid?'Add payment':'Mark paid'}</button><button class="btn ghost" data-act="editStudent" data-id="${id}">Edit info</button></div>`;
+    h += `<div class="btnrow"><button class="btn ghost" data-act="openVisit" data-id="${id}">+ Missed class</button><button class="btn ghost" data-act="openAdjust" data-id="${id}">± Adjust</button></div>`;
+    if (s.note) h += `<div class="section">Note</div><div class="note">${esc(s.note)}</div>`;
+
+    const groups = ledgerMonths(id);
+    const cutoff = addMonths(CUR,-2);
+    const shown = S.showAll[id] ? groups : groups.filter(g=>g.m>=cutoff);
+    h += `<div class="section">History</div>`;
+    if (!groups.length) h += `<div class="listcard"><div class="li"><div class="grow" style="color:var(--muted)">Nothing yet — classes and payments will show here.</div></div></div>`;
+    shown.forEach(g=>{
+      h += `<div class="mhead"><b>${monthName(g.m)}</b><span style="color:${g.end<0?'var(--red)':'var(--muted)'}">${g.m>=CUR?'Balance now':'Ended'}: ${signed(g.end)||'0'}</span></div>`;
+      h += `<div class="listcard">${g.items.map(it=>ledgerItem(id,g.m,it)).join('')}</div>`;
+    });
+    if (shown.length < groups.length) h += `<button class="btn ghost" style="margin-top:14px" data-act="showAll" data-id="${id}">Show older months (${groups.length-shown.length})</button>`;
+    if (s.archived) h += `<div class="section">Archived student</div><div class="btnrow"><button class="btn ghost" data-act="archive" data-id="${id}">Bring back</button><button class="btn danger" data-act="askDelete" data-id="${id}">Delete permanently</button></div>`;
+    return h;
+  },
+  settings(){
+    return `<div class="sheethead"><div class="grow"><h2>Settings</h2></div>${closeBtn}</div>
+      <label class="field"><span>Currency (shown before amounts)</span><input id="fCur" value="${esc(S.settings.currency||'')}" placeholder="e.g. IQD, $, SAR" autocomplete="off"></label>
+      <button class="btn" data-act="saveSettings">Save</button>
+      <div class="section">Put it on your home screen</div>
+      <div class="note tips"><p><b>iPhone:</b> open this link in Safari → Share button → <i>Add to Home Screen</i>.</p><p style="margin:0"><b>Android:</b> open it in Chrome → ⋮ menu → <i>Add to Home screen</i>.</p></div>
+      <div class="section">Backup</div>
+      <div class="btnrow"><button class="btn ghost" data-act="backup">Download backup</button><label class="btn ghost" style="cursor:pointer">Restore backup<input type="file" id="restoreFile" accept=".json,application/json" hidden></label></div>
+      <p class="sub" style="margin:8px 2px 0">Download a backup now and then and keep it somewhere safe. Restoring adds the backup's data back in; it doesn't delete anything.</p>
+      <div class="section">Account</div>
+      <div class="listcard"><div class="li"><div class="grow"><b>Signed in</b><small>${esc(S.email||'')}</small></div><button class="smallbtn ghost" data-act="logout">Sign out</button></div></div>
+      <div class="section">How balances work</div>
+      <div class="note tips"><p>Each student has one running balance: classes paid for, minus classes attended. Leftover classes and owed classes carry into the next month by themselves.</p><p>Forgot a day? Tap the date at the top of Attendance to go back, or use <b>+ Missed class</b> on the student's page.</p><p style="margin:0">To drop unused classes, forgive owed ones or set a starting balance, use <b>± Adjust</b> on the student's page.</p></div>`;
+  },
+  topics(){
+    const ts = topics();
+    const count = id => activeStudents().filter(s=>(s.topics||[]).includes(id)).length;
+    let h = `<div class="sheethead"><div class="grow"><h2>Topics</h2><p class="sub">The subjects you teach. Tap a name to rename it.</p></div>${closeBtn}</div>`;
+    h += ts.length ? `<div class="listcard">${ts.map(t=>`<div class="li"><span class="dot" style="background:${topicColor(t.id)};width:12px;height:12px"></span><div class="grow"><input class="tname" data-tid="${t.id}" value="${esc(t.name)}" aria-label="Topic name"><small>${count(t.id)} student${count(t.id)===1?'':'s'}</small></div><button class="smallbtn ghost" data-act="topicStudents" data-v="${t.id}">Students</button><button class="x" data-act="delTopic" data-v="${t.id}" aria-label="Delete topic">${ICON.x}</button></div>`).join('')}</div>`
+      : `<div class="listcard"><div class="li"><div class="grow" style="color:var(--muted)">No topics yet — add your first one below.</div></div></div>`;
+    h += `<div class="section">Add a topic</div><div class="inline"><input id="fTopicNew" placeholder="e.g. Chemistry" autocomplete="off"><button class="smallbtn" style="height:48px" data-act="addTopic">Add</button></div>`;
+    h += `<p class="sub" style="margin-top:14px">Tip: tap <b>Students</b> next to a topic to tick everyone who takes it, all at once.</p>`;
+    return h;
+  },
+  topicStudents(tid){
+    const t = topics().find(x=>x.id===tid); if (!t) return null;
+    const list = activeStudents().sort(byName);
+    const n = list.filter(s=>(s.topics||[]).includes(tid)).length;
+    let h = `<div class="sheethead"><button class="x" data-act="topics" aria-label="Back">${ICON.left}</button><div class="grow"><h2><span class="dot" style="background:${topicColor(tid)};width:12px;height:12px;margin-right:8px;vertical-align:middle"></span>${esc(t.name)}</h2><p class="sub">Tap everyone who takes this topic · ${n} selected</p></div>${closeBtn}</div>`;
+    if (!list.length) return h + `<div class="empty">No students yet.</div>`;
+    h += list.map(s=>{ const on = (s.topics||[]).includes(tid);
+      return `<button class="row ${on?'on':''}" data-act="topicMember" data-id="${s.id}" data-v="${tid}">${avatar(s)}<span class="who"><b>${esc(s.name)}</b><small>${esc(s.grade||'')||'&nbsp;'}</small></span><span class="check">${ICON.check}</span></button>`; }).join('');
+    return h + `<button class="btn" data-act="topics">Done</button>`;
+  },
+  confirmDelete(id){
+    const s = S.students[id]; if (!s) return null;
+    return `<div class="sheethead"><div class="grow"><h2>Delete ${esc(s.name)} forever?</h2></div>${closeBtn}</div>
+      <p style="margin:0 0 12px">This removes ${esc(s.name)} and <b>all their attendance and payment history</b>. Their payments will also disappear from past monthly summaries.</p>
+      <p class="sub" style="margin:0 0 18px">This can't be undone. If you just want them off your lists, keeping them archived is enough.</p>
+      <button class="btn reddel" data-act="doDelete" data-id="${id}">Delete forever</button>
+      <button class="btn ghost" data-act="detail" data-id="${id}">Cancel</button>`;
+  },
+  copy(text){
+    return `<div class="sheethead"><div class="grow"><h2>Report</h2><p class="sub">Press and hold to select, then copy.</p></div>${closeBtn}</div><textarea class="copybox" readonly>${esc(text)}</textarea>`;
+  },
+};
+function setPreview(before, after){ const el = $('#preview'); if (el) el.outerHTML = balanceAfterHTML(before, after); }
+
+/* ---------- actions ---------- */
+function toggleVisit(id){
+  if (guard()) return;
+  const d = S.date, m = d.slice(0,7), s = S.students[id];
+  const was = getCard(m,id).visits.includes(d);
+  const before = updateCard(m,id,c=>{ if (was) c.visits.splice(c.visits.lastIndexOf(d),1); else c.visits.push(d); });
+  try{ navigator.vibrate && navigator.vibrate(8); }catch(e){}
+  if (!was){
+    const b = balance(id);
+    if (b < 0) toast(`${s.name} now owes ${classesTxt(-b)}`, ()=>restoreCard(m,id,before));
+    else if (b === 0 && everPaid(id)) toast(`${s.name} has no classes left`, ()=>restoreCard(m,id,before));
+  }
+}
+function confirmPay(id){
+  if (guard()) return;
+  const amount = num($('#fAmt').value), classes = num($('#fCls').value);
+  if (amount == null && classes == null){ toast('Enter the amount or the number of classes.'); return; }
+  if ((classes||0) < 0 || (amount||0) < 0){ toast('Amounts and classes can’t be negative — use ± Adjust for corrections.'); return; }
+  const d = $('#fPayDate').value || TODAY;
+  if (d > TODAY){ toast("The payment date can't be in the future."); return; }
+  const chip = document.querySelector('#fMonth .chip.on'); const m = chip ? chip.dataset.m : CUR;
+  const s = S.students[id];
+  const before = updateCard(m,id,c=>{ c.payments.push({d, amount:amount||0, classes:classes||0, ts:Date.now()}); });
+  if (S.returnTo === id) openSheet('detail', id); else closeSheet();
+  S.returnTo = null;
+  toast(`${s.name} paid for ${monthOnly(m)} · ${balTxt(balance(id))}`, ()=>restoreCard(m,id,before));
+}
+function addVisit(id){
+  if (guard()) return;
+  const d = $('#fVisit').value;
+  if (!d){ toast('Pick a date.'); return; }
+  if (d > TODAY){ toast("You can't add a class in the future."); return; }
+  const m = d.slice(0,7), s = S.students[id];
+  const already = getCard(m,id).visits.filter(x=>x===d).length;
+  const before = updateCard(m,id,c=>{ c.visits.push(d); });
+  openSheet('detail', id);
+  toast(already ? `Added a 2nd class on ${dayShort(d)}` : `Class added on ${dayShort(d)} · ${balTxt(balance(id))}`, ()=>restoreCard(m,id,before));
+}
+function saveAdj(id){
+  if (guard()) return;
+  const n = +$('#adjVal').dataset.n || 0;
+  if (!n){ toast('Use − or + to choose how many classes.'); return; }
+  const note = $('#adjNote').value.trim();
+  const before = updateCard(CUR,id,c=>{ c.adjustments.push({d:TODAY, n, note, ts:Date.now()}); });
+  openSheet('detail', id);
+  toast(`Balance ${signed(n)} · ${balTxt(balance(id))}`, ()=>restoreCard(CUR,id,before));
+}
+function setAdj(n){
+  const el = $('#adjVal'); if (!el) return;
+  el.dataset.n = n; el.textContent = signed(n) || '0';
+  const b = +el.dataset.bal; setPreview(b, b+n);
+}
+function submitStudent(id){
+  if (guard()) return;
+  const name = $('#fName').value.trim();
+  if (!name){ toast('Please type a name.'); $('#fName').focus(); return; }
+  const old = id ? S.students[id] : null;
+  const dup = !id && Object.values(S.students).find(x=>(x.name||'').trim().toLowerCase()===name.toLowerCase());
+  const st = {
+    id: id || 's' + newId(),
+    name, grade: $('#fGrade').value.trim(),
+    price: old ? (old.price ?? null) : null, classes: old ? (old.classes ?? null) : null,
+    phone: $('#fPhone').value.trim(), note: $('#fNote').value.trim(),
+    topics: [...document.querySelectorAll('#fTopics .chip.on')].map(c=>c.dataset.v),
+    archived: old ? !!old.archived : false,
+    created: old ? old.created : TODAY,
+  };
+  saveStudent(st);
+  if (id){ openSheet('detail', id); toast('Saved'); }
+  else { closeSheet(); if (S.tab==='today') computeOrder(); render(); toast(dup ? `${name} added — note: you already have a student with this name` : `${name} added`); }
+}
+async function deleteStudent(id){
+  if (guard()) return;
+  const s = S.students[id]; if (!s || !s.archived) return;
+  closeSheet();
+  delete S.students[id];
+  Object.keys(S.cards).forEach(k=>{ if (k.endsWith('_'+id)) delete S.cards[k]; });
+  S.ver++;
+  render();
+  try {
+    const snap = await S.db.collection('cards').where('studentId','==',id).get();
+    for (const d of snap.docs) await S.db.doc('cards/'+d.id).delete();
+    await S.db.doc('students/'+id).delete();
+    toast(`${s.name} deleted`);
+  } catch(e){ handleWriteErr(e); }
+}
+function removeEntry(id, m, kind, i){
+  if (guard()) return;
+  const field = {class:'visits', pay:'payments', adj:'adjustments'}[kind]; if (!field) return;
+  const before = updateCard(m,id,c=>{ c[field].splice(i,1); });
+  toast(({class:'Class', pay:'Payment', adj:'Adjustment'})[kind] + ' removed', ()=>restoreCard(m,id,before));
+}
+
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, id = el.dataset.id;
+  switch(a){
+    case 'tab': setTab(el.dataset.tab); break;
+    case 'day': setDate(addDays(S.date, +el.dataset.k)); break;
+    case 'goToday': setDate(TODAY); break;
+    case 'toggle': toggleVisit(id); break;
+    case 'close': closeSheet(); break;
+    case 'settings': openSheet('settings'); break;
+    case 'addStudent': if (!guard()) openSheet('student'); break;
+    case 'editStudent': openSheet('student', id); break;
+    case 'detail': openSheet('detail', id); break;
+    case 'pay': if (!guard()){ S.returnTo = (S.sheet && S.sheet.type==='detail') ? S.sheet.arg : null; openSheet('pay', id); } break;
+    case 'confirmPay': confirmPay(id); break;
+    case 'openVisit': if (!guard()) openSheet('visit', id); break;
+    case 'visitQuick': el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c===el)); $('#fVisit').value = el.dataset.d; break;
+    case 'addVisit': addVisit(id); break;
+    case 'openAdjust': if (!guard()) openSheet('adjust', id); break;
+    case 'adjStep': setAdj((+$('#adjVal').dataset.n||0) + (+el.dataset.k)); break;
+    case 'adjZero': setAdj(-(+$('#adjVal').dataset.bal)); if (!$('#adjNote').value) $('#adjNote').value = (+$('#adjVal').dataset.bal) > 0 ? 'Dropped unused classes' : 'Forgiven'; break;
+    case 'adjReason': $('#adjNote').value = el.textContent; el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c===el)); break;
+    case 'saveAdj': saveAdj(id); break;
+    case 'rmEntry': removeEntry(id, el.dataset.m, el.dataset.kind, +el.dataset.i); break;
+    case 'showAll': S.showAll[id] = true; openSheet('detail', id, true); break;
+    case 'saveStudent': submitStudent(id || null); break;
+    case 'payMonth': el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c===el)); break;
+    case 'archive': { if (guard()) break; const s = {...S.students[id]}; s.archived = !s.archived; saveStudent(s); closeSheet(); toast(s.archived ? `${s.name} archived` : `${s.name} is back`); break; }
+    case 'askDelete': if (!guard()) openSheet('confirmDelete', id); break;
+    case 'doDelete': deleteStudent(id); break;
+    case 'sumMonth': S.sumMonth = el.dataset.m; document.querySelectorAll('.chip[data-m]').forEach(c=>c.classList.toggle('on', c.dataset.m===S.sumMonth)); render(); break;
+    case 'copyReport': { const txt = reportText(); if (!txt) break;
+      const fallback = () => openSheet('copy', txt);
+      try { navigator.clipboard.writeText(txt).then(()=>toast('Report copied — paste it in WhatsApp'), fallback); } catch(err){ fallback(); }
+      break; }
+    case 'saveSettings': { if (guard()) break; S.settings = {...S.settings, currency: $('#fCur').value.trim()}; saveSettings(); closeSheet(); render(); toast('Saved'); break; }
+    case 'filter': { const k = el.dataset.kind, v = el.dataset.v;
+      if (k === 'all') S.filter = {topic:null, grade:null}; else S.filter = {...S.filter, [k]: S.filter[k]===v ? null : v};
+      saveFilter(); render(); break; }
+    case 'markAll': { if (guard()) break; const d = S.date, m = d.slice(0,7);
+      const ids = orderedActive().filter(passFilter).filter(s=>!getCard(m,s.id).visits.includes(d)).map(s=>s.id);
+      const befores = ids.map(sid=>[sid, updateCard(m,sid,c=>{ c.visits.push(d); })]);
+      if (ids.length) toast(`${ids.length} marked as came`, ()=>befores.forEach(([sid,b])=>restoreCard(m,sid,b)));
+      break; }
+    case 'topics': openSheet('topics'); break;
+    case 'topicStudents': openSheet('topicStudents', el.dataset.v); break;
+    case 'topicToggle': el.classList.toggle('on'); break;
+    case 'addTopic': { if (guard()) break; const inp = $('#fTopicNew'); const t = createTopic(inp.value); if (!t){ inp.focus(); break; } openSheet('topics', null, true); render(); toast(`${t.name} added`); break; }
+    case 'delTopic': { if (guard()) break; const prev = topics(); const t = prev.find(x=>x.id===el.dataset.v);
+      S.settings = {...S.settings, topics: prev.filter(x=>x.id!==el.dataset.v)}; saveSettings(); openSheet('topics', null, true); render();
+      toast(`${t ? t.name : 'Topic'} deleted`, ()=>{ S.settings = {...S.settings, topics: prev}; saveSettings(); if (S.sheet && S.sheet.type==='topics') openSheet('topics', null, true); render(); });
+      break; }
+    case 'topicMember': { if (guard()) break; const s = S.students[id]; if (!s) break; const tid = el.dataset.v; const cur = s.topics||[];
+      saveStudent({...s, topics: cur.includes(tid) ? cur.filter(x=>x!==tid) : [...cur, tid]}); break; }
+    case 'login': doLogin(); break;
+    case 'forgot': { const em = ($('#lEmail')||{}).value || ''; if (!em.trim()){ S.loginErr = 'Type your email first, then tap “Forgot password?”.'; render(); break; }
+      sendPasswordResetEmail(S.authObj, em.trim()).then(()=>toast('Password reset email sent — check your inbox.'), ()=>toast("Couldn't send the email. Check the address.")); break; }
+    case 'logout': closeSheet(); signOut(S.authObj); break;
+    case 'backup': downloadBackup(); break;
+    case 'undo': { const u = S.undo; S.undo = null; $('#toast').hidden = true; if (u) u(); break; }
+  }
+});
+document.addEventListener('keydown', e=>{
+  if (e.key === 'Escape' && S.sheet) closeSheet();
+  if (e.key === 'Enter' && (e.target.id === 'lEmail' || e.target.id === 'lPass')) doLogin();
+  if (e.key === 'Enter' && e.target.id === 'fTopicNew') $('[data-act="addTopic"]').click();
+  if (e.key === 'Enter' && e.target.classList.contains('tname')) e.target.blur();
+});
+document.addEventListener('input', e=>{
+  if (e.target.id === 'fCls'){ const b = +e.target.dataset.bal; setPreview(b, b + (num(e.target.value)||0)); }
+  if (e.target.id === 'adjNote') document.querySelectorAll('[data-act="adjReason"]').forEach(c=>c.classList.toggle('on', c.textContent===e.target.value));
+});
+document.addEventListener('change', e=>{
+  if (e.target.id === 'dayPick'){ setDate(e.target.value); return; }
+  if (e.target.id === 'restoreFile'){ const f = e.target.files && e.target.files[0]; if (f) restoreBackup(f); return; }
+  if (e.target.id === 'fVisit'){ document.querySelectorAll('#fVisitQuick .chip').forEach(c=>c.classList.toggle('on', c.dataset.d===e.target.value)); return; }
+  if (e.target.id === 'fPayDate' && e.target.value){
+    const m = e.target.value.slice(0,7), box = $('#fMonth');
+    if (box && !box.querySelector(`[data-m="${m}"]`)) box.insertAdjacentHTML('afterbegin', `<button type="button" class="chip" data-act="payMonth" data-m="${m}">${monthShort(m)}</button>`);
+    if (box) box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.dataset.m===m));
+    return;
+  }
+  const inp = e.target.closest && e.target.closest('.tname[data-tid]'); if (!inp) return;
+  if (guard()) return;
+  const name = inp.value.trim(), tid = inp.dataset.tid;
+  const old = topics().find(t=>t.id===tid);
+  if (!name || !old){ if (old) inp.value = old.name; return; }
+  if (name === old.name) return;
+  S.settings = {...S.settings, topics: topics().map(t=>t.id===tid ? {...t, name} : t)};
+  saveSettings(); render(); toast('Renamed');
+});
+
+/* ---------- startup (Firebase) ---------- */
+function makeDb(fs){
+  const wrapQ = qs => ({ docs: qs.docs.map(d=>({id:d.id, exists:true, data:()=>d.data(), metadata:d.metadata})), size:qs.size, empty:qs.empty, metadata:qs.metadata });
+  const makeQ = q => ({
+    where: (f,op,v) => makeQ(query(q, where(f,op,v))),
+    get: async () => wrapQ(await getDocs(q)),
+    onSnapshot: (next, err) => onSnapshot(q, s=>next(wrapQ(s)), err),
+  });
+  return {
+    collection: path => makeQ(collection(fs, path)),
+    doc: path => { const r = doc(fs, path); return {
+      set: d => setDoc(r, d),
+      delete: () => deleteDoc(r),
+      onSnapshot: (next, err) => onSnapshot(r, s=>next({id:s.id, exists:s.exists(), data:()=>s.data(), metadata:s.metadata}), err),
+    }; },
+  };
+}
+function onErr(e){
+  if (e && e.code === 'permission-denied'){
+    S.stale = true; S.errMsg = `This account (${S.email||'unknown'}) isn't allowed to open the data. Ask the person who set up the app to add your email.`;
+    clearTimeout(loadTimer); render(); return;
+  }
+  if (S.ready) { toast("Lost connection to your data. Changes are kept on this phone and will sync when you're back online."); return; }
+  S.stale = true; S.errMsg = "Couldn't load your data. Check your internet and reopen the app.";
+  clearTimeout(loadTimer); render();
+}
+let loadTimer, unsubs = [];
+function maybeReady(snap){
+  if (S.loadedS && S.loadedC && !S.ready){ S.ready = true; computeOrder(); }
+  if (snap && snap.metadata && !snap.metadata.fromCache){ S.stale = false; }
+  if (S.ready) clearTimeout(loadTimer);
+  render();
+}
+function startData(){
+  const db = S.db;
+  loadTimer = setTimeout(()=>{ if (!S.ready){ S.stale = true; render(); } }, 10000);
+  unsubs.push(db.collection('students').onSnapshot(snap=>{
+    const next = {}; snap.docs.forEach(d=>{ next[d.id] = {...d.data(), id:d.id}; });
+    S.students = next; S.loadedS = true; maybeReady(snap);
+  }, onErr));
+  // every month is loaded, so a student's balance always includes their whole history
+  unsubs.push(db.collection('cards').onSnapshot(snap=>{
+    const next = {}; snap.docs.forEach(d=>{ next[d.id] = d.data(); });
+    S.cards = next; S.ver++; S.loadedC = true; maybeReady(snap);
+  }, onErr));
+  unsubs.push(db.doc('settings/app').onSnapshot(d=>{ if (d.exists){ S.settings = {currency:'', ...d.data()}; if (S.ready) render(); } }, ()=>{}));
+}
+function stopData(){
+  unsubs.forEach(u=>{ try{ u(); }catch(e){} }); unsubs = [];
+  clearTimeout(loadTimer);
+  Object.assign(S, {students:{}, cards:{}, settings:{currency:''}, ready:false, stale:false, errMsg:'', loadedS:false, loadedC:false, readOnly:false});
+  S.ver++;
+}
+async function doLogin(){
+  const em = ($('#lEmail').value||'').trim(), pw = $('#lPass').value||'';
+  S.lastEmail = em;
+  if (!em || !pw){ S.loginErr = 'Enter your email and password.'; render(); return; }
+  S.loginErr = ''; const btn = $('[data-act="login"]'); if (btn){ btn.disabled = true; btn.textContent = 'Signing in…'; }
+  try { await signInWithEmailAndPassword(S.authObj, em, pw); }
+  catch(e){
+    const c = e && e.code || '';
+    S.loginErr = c.includes('network') ? 'No internet connection.' : c.includes('too-many') ? 'Too many tries — wait a minute and try again.' : 'Wrong email or password.';
+    render();
+  }
+}
+function init(){
+  S.auth = 'checking';
+  renderTabs(); renderToolbar(); render();
+  const cfg = window.FIREBASE_CONFIG;
+  if (!cfg || !cfg.apiKey || String(cfg.apiKey).includes('PASTE')){ S.noDb = true; render(); return; }
+  const app = initializeApp(cfg);
+  let fs;
+  try { fs = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
+  catch(e){ fs = initializeFirestore(app, {}); }
+  S.db = makeDb(fs);
+  S.authObj = getAuth(app);
+  onAuthStateChanged(S.authObj, user=>{
+    stopData();
+    if (user){ S.auth = 'in'; S.email = user.email; S.lastEmail = user.email; S.loginErr = ''; renderToolbar(); startData(); }
+    else { S.auth = 'out'; S.email = ''; closeSheet(); }
+    render();
+  });
+}
+init();
+</script>
+</body>
+</html>

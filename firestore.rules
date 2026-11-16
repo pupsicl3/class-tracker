@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only these accounts can read or change anything. Use lowercase emails.
+    function allowed() {
+      return request.auth != null && request.auth.token.email in [
+        'FRIEND_EMAIL_HERE',
+        'YOUR_EMAIL_HERE'
+      ];
+    }
+    match /{document=**} {
+      allow read, write: if allowed();
+    }
+  }
+}
